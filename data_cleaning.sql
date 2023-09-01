@@ -5,7 +5,7 @@ WITH bike_data AS
 	FROM "2022_08-2023_07"
 	),
 
--- Check for duplicate entries. None found.
+-- Checked for duplicate entries. None found.
   
 dup_check AS
 	(
@@ -46,7 +46,7 @@ dup_check AS
 /*  
 
 Determine if there are any NULL values in the data.
-Results show start_station_name, end_station_name, start_station_id, end_station_id, end_lat, and end_lng have NULL values. 
+Results showed start_station_name, end_station_name, start_station_id, end_station_id, end_lat, and end_lng had NULL values. 
 
 */
 
@@ -93,10 +93,10 @@ Result were:
 	- start/end_station_name may be NULL while start/end_lat/lng may NOT BE NULL.
 Per Divvy FAQ, bikes can be parked outside of docking stations. However, the customer will
 be charged an out-of-station fee. This could be the reason for either start or end_station_name
-to be NULL.  
+to be NULL.  Divvy FAQ: https://help.divvybikes.com/hc/en-us
 
 Entries that don't have a reference point to where they started or ended (i.e. start/end_station_name/id or start/end_lat/lng),
-will be removed since they are missing needed data.  
+were removed since they were missing needed data.  
 
 */
 
@@ -134,8 +134,8 @@ data_w_endpts AS
 
 /* 
 
-There are 128,904 entries with 'docked bike'. It would be prudent to ask what this is, 
-but for now, since focus is on trip data specifically, this will be removed. 
+There were 128,904 entries with 'docked bike'. It would be prudent to ask what this is, 
+but for now, since focus is on trip data specifically, these were removed. 
 
 */
 
@@ -146,7 +146,7 @@ active_bikes AS
 	WHERE rideable_type <> 'docked_bike'
 	),
 
--- For NULL start/end_station_name/id that have start/end_lat/lng, NULL will be replaced with "Out Of Station".
+-- For NULL start/end_station_name/id that have start/end_lat/lng, NULL was replaced with "Out Of Station".
 
 OOS_added AS
 	(
@@ -163,10 +163,10 @@ OOS_added AS
 
 From manually checking unique station names using a GROUP BY statement, we can see that some stations are attributed to testing, 
 bike repair, specific directional locations of specific stations, temporary locations, public racks, city racks
-and have an asterisk added to them. These stations are trimmed/adjusted. 
+and have an asterisk added to them. These stations were trimmed/adjusted. 
 
-Note that there were vaccination sites set up as well at various stations. This are removed, assuming that those
-who parked there were availing of vaccines.
+Note that there were vaccination sites set up as well at various stations. These were removed, assuming that users
+who parked bikes there were availing of vaccines.
 
 */
 
@@ -234,7 +234,7 @@ second_check_station_names AS
 	FROM first_check_station_names
 ),
 
--- Extract month, day of week, hour, minutes and duration of ride.
+-- Extracted month, day of week, hour, minutes and duration of ride.
 
 date_extraction AS 
 	(
@@ -278,7 +278,7 @@ date_extraction AS
 	FROM second_check_station_names
 	),
 
--- Removal of rides that are less than 1 minute.
+-- Removed rides that were less than 1 minute.
 
 rm_less_1m AS
 	(
@@ -287,7 +287,7 @@ rm_less_1m AS
 	WHERE trip_duration_minutes > 1
 	)
 
--- Cleaned data.
+-- Clean data.
 
 	SELECT count(*)
 	FROM rm_less_1m
