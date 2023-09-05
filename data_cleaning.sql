@@ -1,3 +1,4 @@
+CREATE TABLE cleaned_data AS
 
 WITH bike_data AS 
 	(
@@ -329,6 +330,3 @@ rm_less_1m AS
 
 	SELECT *
 	FROM rm_less_1m
-
-		
-  
