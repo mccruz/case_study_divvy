@@ -5,8 +5,7 @@ WITH bike_data AS
 	FROM "2022_08-2023_07"
 	),
 
--- Checked for duplicate entries. None found.
-  
+-- Check for duplicate entries. None found.
 dup_check AS
 	(
 	SELECT 
@@ -43,10 +42,14 @@ dup_check AS
 	ORDER BY ride_id
 	),
 
+
+
+
 /*  
 
 Determine if there are any NULL values in the data.
-Results showed start_station_name, end_station_name, start_station_id, end_station_id, end_lat, and end_lng had NULL values. 
+Results show start_station_name, end_station_name, start_station_id, end_station_id,
+end_lat, and end_lng have NULL values. 
 
 */
 
@@ -71,7 +74,7 @@ count_null_values AS
 
 /* 
 
-Below query was modified multiple times to check pattern of NULL values in both start/end_station_name, 
+Below query was modified multiple times to check pattern of NULL values in both start/end_station_name,
 start/end)_station_id and start/end_lat/lng. 
 
 */
@@ -88,15 +91,15 @@ null_start_station AS
 /*  
 
 Result were: 
-	- If start/end_station_name IS NULL, start/end_station_id is also NULL.
-	- start/end_station_name may NOT BE NULL but start/end_lat/lng may be NULL.
-	- start/end_station_name may be NULL while start/end_lat/lng may NOT BE NULL.
+	If start/end_station_name IS NULL, start/end_station_id is also NULL.
+	start/end_station_name may be NOT NULL but start/end_lat/lng may be NULL.
+	start/end_station_name may be NULL while start/end_lat/lng is NOT NULL.
 Per Divvy FAQ, bikes can be parked outside of docking stations. However, the customer will
 be charged an out-of-station fee. This could be the reason for either start or end_station_name
-to be NULL.  Divvy FAQ: https://help.divvybikes.com/hc/en-us
+to be NULL.  
 
 Entries that don't have a reference point to where they started or ended (i.e. start/end_station_name/id or start/end_lat/lng),
-were removed since they were missing needed data.  
+should be removed since they are missing needed data.  
 
 */
 
@@ -104,9 +107,7 @@ data_w_endpts AS
 	(
 	SELECT *
 	FROM bike_data	
-  
 -- Entry should either have a end_station_name, id or both lat/lng.
-  
 	WHERE 	
 		(
 			end_station_name IS NOT NULL  
@@ -119,7 +120,6 @@ data_w_endpts AS
 		)
 
 -- AND it should either have a start_station_name, id or both lat/lng.		
-  
 		AND 	
 		(
 		 	start_station_name IS NOT NULL
@@ -134,8 +134,8 @@ data_w_endpts AS
 
 /* 
 
-There were 128,904 entries with 'docked bike'. It would be prudent to ask what this is, 
-but for now, since focus is on trip data specifically, these were removed. 
+There are 128,904 entries with 'docked bike'. It would be prudent to ask what this is, but for now, 
+since focus is on trip data specifically, this will be removed. 
 
 */
 
@@ -146,7 +146,7 @@ active_bikes AS
 	WHERE rideable_type <> 'docked_bike'
 	),
 
--- For NULL start/end_station_name/id that have start/end_lat/lng, NULL was replaced with "Out Of Station".
+-- For NULL start/end_station_name/id that have start/end_lat/lng, NULL will be replaced with "Out Of Station".
 
 OOS_added AS
 	(
@@ -162,11 +162,11 @@ OOS_added AS
 /* 
 
 From manually checking unique station names using a GROUP BY statement, we can see that some stations are attributed to testing, 
-bike repair, specific directional locations of specific stations, temporary locations, public racks, city racks
-and have an asterisk added to them. These stations were trimmed/adjusted. 
+bike repair, specific directional locations within the same station, temporary locations, public city racks, city racks
+and have an asterisk added to them. These stations need to be trimmed/adjusted. 
 
-Note that there were vaccination sites set up as well at various stations. These were removed, assuming that users
-who parked bikes there were availing of vaccines.
+Note that there were vaccination sites set up as well at various stations. This will be removed assuming that those
+who parked there were availing of vaccines and not those that regularly park there.
 
 */
 
@@ -204,13 +204,47 @@ first_check_station_names AS
 			WHEN start_station_name_1 ~ ' \(NEXT Apts\)$' THEN REGEXP_REPLACE(start_station_name_1, ' \(NEXT Apts\)$', '')
 			WHEN start_station_name_1 ~ '^City Rack - ' THEN REGEXP_REPLACE(start_station_name_1, '^City Rack - ', '')
 		ELSE start_station_name_1
-    	END AS start_station_name_2
+    	END AS start_station_name_2,
+		CASE
+			WHEN end_station_name_1 ~ '\*$' THEN REGEXP_REPLACE(end_station_name_1, '\*$', '')
+			WHEN end_station_name_1 ~ ' N$' THEN REGEXP_REPLACE(end_station_name_1, ' N$', '')
+			WHEN end_station_name_1 ~ ' S$' THEN REGEXP_REPLACE(end_station_name_1, ' S$', '')
+			WHEN end_station_name_1 ~ ' E$' THEN REGEXP_REPLACE(end_station_name_1, ' E$', '')
+			WHEN end_station_name_1 ~ ' W$' THEN REGEXP_REPLACE(end_station_name_1, ' W$', '')
+			WHEN end_station_name_1 ~ ' NW$' THEN REGEXP_REPLACE(end_station_name_1, ' NW$', '')
+			WHEN end_station_name_1 ~ ' SW$' THEN REGEXP_REPLACE(end_station_name_1, ' SW$', '')
+			WHEN end_station_name_1 ~ ' - W$' THEN REGEXP_REPLACE(end_station_name_1, ' - W$', '')		
+			WHEN end_station_name_1 ~ ' - SE$' THEN REGEXP_REPLACE(end_station_name_1, ' - SE$', '')
+			WHEN end_station_name_1 ~ ' - SW$' THEN REGEXP_REPLACE(end_station_name_1, ' - SW$', '')
+			WHEN end_station_name_1 ~ ' - NW$' THEN REGEXP_REPLACE(end_station_name_1, ' - NW$', '')
+			WHEN end_station_name_1 ~ ' - NE$' THEN REGEXP_REPLACE(end_station_name_1, ' - NE$', '')		
+			WHEN end_station_name_1 ~ ' - East$' THEN REGEXP_REPLACE(end_station_name_1, ' - East$', '')
+			WHEN end_station_name_1 ~ ' - West$' THEN REGEXP_REPLACE(end_station_name_1, ' - West$', '')
+			WHEN end_station_name_1 ~ ' - South$' THEN REGEXP_REPLACE(end_station_name_1, ' - South$', '')
+			WHEN end_station_name_1 ~ ' - North$' THEN REGEXP_REPLACE(end_station_name_1, ' - North$', '')
+			WHEN end_station_name_1 ~ ' - midblock$' THEN REGEXP_REPLACE(end_station_name_1, ' - midblock$', '')
+			WHEN end_station_name_1 ~ ' - midblock south$' THEN REGEXP_REPLACE(end_station_name_1, ' - midblock south$', '')
+			WHEN end_station_name_1 ~ ' - south corner$' THEN REGEXP_REPLACE(end_station_name_1, ' - south corner$', '')
+			WHEN end_station_name_1 ~ ' - north corner$' THEN REGEXP_REPLACE(end_station_name_1, ' - north corner$', '')
+			WHEN end_station_name_1 ~ ' \(NU\)$' THEN REGEXP_REPLACE(end_station_name_1, ' \(NU\)$', '')		
+			WHEN end_station_name_1 ~ ' \(East\)$' THEN REGEXP_REPLACE(end_station_name_1, ' \(East\)$', '')
+			WHEN end_station_name_1 ~ ' \(east\)$' THEN REGEXP_REPLACE(end_station_name_1, ' \(east\)$', '')
+			WHEN end_station_name_1 ~ ' \(south\)$' THEN REGEXP_REPLACE(end_station_name_1, ' \(south\)$', '')
+			WHEN end_station_name_1 ~ ' \(Temp\)$' THEN REGEXP_REPLACE(end_station_name_1, ' \(Temp\)$', '')
+			WHEN end_station_name_1 ~ ' \(NEXT Apts\)$' THEN REGEXP_REPLACE(end_station_name_1, ' \(NEXT Apts\)$', '')
+			WHEN end_station_name_1 ~ '^City Rack - ' THEN REGEXP_REPLACE(end_station_name_1, '^City Rack - ', '')
+		ELSE end_station_name_1
+    	END AS end_station_name_2
 		
 	FROM OOS_added
 	WHERE start_station_name NOT LIKE '%Vaccination Site'
 	AND start_station_name NOT LIKE '%REPAIR MOBILE STATION'
 	AND start_station_name NOT LIKE '% - TESTING'
 	AND start_station_name NOT LIKE '% - Test'
+	AND	end_station_name NOT LIKE '%Vaccination Site'
+	AND end_station_name NOT LIKE '%REPAIR MOBILE STATION'
+	AND end_station_name NOT LIKE '% - TESTING'
+	AND end_station_name NOT LIKE '% - Test'
 
 	),
 		
@@ -229,12 +263,16 @@ second_check_station_names AS
 		CASE
 			WHEN start_station_name_2 ~ '^Public Rack - ' THEN REGEXP_REPLACE(start_station_name_2, '^Public Rack - ', '')
 			ELSE start_station_name_2 
-			END AS start_station_name_3
+			END AS start_station_name_3,
+		CASE
+			WHEN end_station_name_2 ~ '^Public Rack - ' THEN REGEXP_REPLACE(end_station_name_2, '^Public Rack - ', '')
+			ELSE end_station_name_2 
+			END AS end_station_name_3
 
 	FROM first_check_station_names
 ),
 
--- Extracted month, day of week, hour, minutes and duration of ride.
+-- Extract month, day of week, hour, minutes and duration of ride.
 
 date_extraction AS 
 	(
@@ -278,7 +316,7 @@ date_extraction AS
 	FROM second_check_station_names
 	),
 
--- Removed rides that were less than 1 minute.
+-- Removal of rides that are less than 1 minute.
 
 rm_less_1m AS
 	(
@@ -287,7 +325,10 @@ rm_less_1m AS
 	WHERE trip_duration_minutes > 1
 	)
 
--- Clean data.
+-- Cleaned data
 
-	SELECT count(*)
+	SELECT *
 	FROM rm_less_1m
+
+		
+  
