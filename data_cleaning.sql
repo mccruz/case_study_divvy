@@ -73,6 +73,23 @@ count_null_values AS
 	FROM bike_data
 	),
 
+-- Count total number of rows that have null values.
+	
+count_tot_null_rows AS
+	(
+	SELECT
+	count(*)
+	
+	FROM "2022_08-2023_07"
+
+	WHERE start_station_name IS NULL
+		OR start_station_id IS NULL
+		OR end_station_name IS NULL
+		OR end_station_id IS NULL
+		OR end_lat IS NULL
+		OR end_lng IS NULL
+	),
+	
 /* 
 
 Below query was modified multiple times to check pattern of NULL values in both start/end_station_name,
@@ -140,6 +157,15 @@ since focus is on trip data specifically, this will be removed.
 
 */
 
+-- Count
+docked_bike_count AS
+	(
+	SELECT count(*)
+	FROM "2022_08-2023_07"
+	WHERE rideable_type = 'docked_bike'
+	),
+-- Remove 'docked_bike'
+	
 active_bikes AS 
 	(
 	SELECT *
@@ -171,6 +197,93 @@ who parked there were availing of vaccines and not those that regularly park the
 
 */
 
+-- Count number of rows with extra characters
+
+count_extra_char AS
+	(
+	SELECT
+	count(*)
+	
+	FROM "2022_08-2023_07"
+
+	WHERE start_station_name ~ '\*$'
+	OR start_station_name ~ ' N$'
+	OR start_station_name ~ ' S$'
+	OR start_station_name ~ ' E$'
+	OR start_station_name ~ ' W$'
+	OR start_station_name ~ ' NW$'
+	OR start_station_name ~ ' SW$'
+	OR start_station_name ~ ' - W$'
+	OR start_station_name ~ ' - SE$'
+	OR start_station_name ~ ' - SW$'
+	OR start_station_name ~ ' - NW$'
+	OR start_station_name ~ ' - NE$'
+	OR start_station_name ~ ' - East$'
+	OR start_station_name ~ ' - West$'
+	OR start_station_name ~ ' - South$'
+	OR start_station_name ~ ' - North$'
+	OR start_station_name ~ ' - midblock$'
+	OR start_station_name ~ ' - midblock south$'
+	OR start_station_name ~ ' - south corner$'
+	OR start_station_name ~ ' - north corner$'
+	OR start_station_name ~ ' \(NU\)$'
+	OR start_station_name ~ ' \(East\)$'
+	OR start_station_name ~ ' \(east\)$'
+	OR start_station_name ~ ' \(south\)$'
+	OR start_station_name ~ ' \(Temp\)$'
+	OR start_station_name ~ ' \(NEXT Apts\)$'
+	OR start_station_name ~ '^City Rack - '
+	
+	OR end_station_name ~ '\*$'
+	OR end_station_name ~ ' N$'
+	OR end_station_name ~ ' S$'
+	OR end_station_name ~ ' E$'
+	OR end_station_name ~ ' W$'
+	OR end_station_name ~ ' NW$'
+	OR end_station_name ~ ' SW$'
+	OR end_station_name ~ ' - W$'
+	OR end_station_name ~ ' - SE$'
+	OR end_station_name ~ ' - SW$'
+	OR end_station_name ~ ' - NW$'
+	OR end_station_name ~ ' - NE$'
+	OR end_station_name ~ ' - East$'
+	OR end_station_name ~ ' - West$'
+	OR end_station_name ~ ' - South$'
+	OR end_station_name ~ ' - North$'
+	OR end_station_name ~ ' - midblock$'
+	OR end_station_name ~ ' - midblock south$'
+	OR end_station_name ~ ' - south corner$'
+	OR end_station_name ~ ' - north corner$'
+	OR end_station_name ~ ' \(NU\)$'
+	OR end_station_name ~ ' \(East\)$'
+	OR end_station_name ~ ' \(east\)$'
+	OR end_station_name ~ ' \(south\)$'
+	OR end_station_name ~ ' \(Temp\)$'
+	OR end_station_name ~ ' \(NEXT Apts\)$'
+	OR end_station_name ~ '^City Rack - '
+	),
+
+-- Count rows used for vaccination sites, repair stations or testing.
+
+other_station_check AS
+	(
+	SELECT
+		count(*)
+		
+	FROM "2022_08-2023_07"
+	
+	WHERE start_station_name LIKE '%Vaccination Site'
+		OR start_station_name LIKE '%REPAIR MOBILE STATION'
+		OR start_station_name LIKE '% - TESTING'
+		OR start_station_name LIKE '% - Test'
+		OR end_station_name LIKE '%Vaccination Site'
+		OR end_station_name LIKE '%REPAIR MOBILE STATION'
+		OR end_station_name LIKE '% - TESTING'
+		OR end_station_name LIKE '% - Test'
+	),
+
+	
+-- Trim	
 
 first_check_station_names AS 
 	(
@@ -242,7 +355,7 @@ first_check_station_names AS
 	AND start_station_name NOT LIKE '%REPAIR MOBILE STATION'
 	AND start_station_name NOT LIKE '% - TESTING'
 	AND start_station_name NOT LIKE '% - Test'
-	AND	end_station_name NOT LIKE '%Vaccination Site'
+	AND end_station_name NOT LIKE '%Vaccination Site'
 	AND end_station_name NOT LIKE '%REPAIR MOBILE STATION'
 	AND end_station_name NOT LIKE '% - TESTING'
 	AND end_station_name NOT LIKE '% - Test'
@@ -258,7 +371,7 @@ makes a second pass to remove unwanted characters not caught in the first pass.
 */
 
 second_check_station_names AS
-(
+	(
 	SELECT
 		*,
 		CASE
@@ -271,7 +384,7 @@ second_check_station_names AS
 			END AS end_station_name_3
 
 	FROM first_check_station_names
-),
+	),
 
 -- Extract month, day of week, hour, minutes and duration of ride.
 
@@ -317,7 +430,17 @@ date_extraction AS
 	FROM second_check_station_names
 	),
 
--- Removal of rides that are less than 1 minute.
+-- Total count of rows with trip duration of <1min.
+
+count_trip_less_1m AS
+	(
+	SELECT 
+	count (*)
+	FROM date_extraction
+	WHERE trip_duration_minutes < 1
+	)
+	
+-- Removal of rides that are <1min.
 
 rm_less_1m AS
 	(
