@@ -449,6 +449,17 @@ rm_less_1m AS
 	WHERE trip_duration_minutes > 1
 	)
 
+-- Count of top stations
+count_top_stations AS
+	(
+	SELECT 
+	start_station_name_3,
+	count(start_station_name_3) AS count_station
+	FROM rm_less_1m
+	GROUP BY start_station_name_3
+	ORDER BY count_station DESC
+	)	
+	
 -- Cleaned data
 
 	SELECT *
