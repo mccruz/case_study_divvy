@@ -459,6 +459,19 @@ count_top_stations AS
 	GROUP BY start_station_name_3
 	ORDER BY count_station DESC
 	)	
+
+-- Top stations. Edit "start_station_name_3" to end station as needed.
+top_stations AS
+	(
+	SELECT 
+	start_station_name_3,
+	count(start_station_name_3) AS count_station
+	
+	FROM rm_less_1m
+	GROUP BY start_station_name_3
+	ORDER BY count_station DESC
+	LIMIT 10
+	)	
 	
 -- Cleaned data
 
