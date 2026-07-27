@@ -1,0 +1,14 @@
+.DS_Store
+
+# Raw and derived data are intentionally excluded.
+data/
+outputs/
+*.csv
+*.zip
+*.parquet
+
+# Local database and editor artifacts.
+*.dump
+*.sql.gz
+.idea/
+.vscode/
