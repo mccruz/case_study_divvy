@@ -4,6 +4,17 @@ A reproducible PostgreSQL case study comparing member and casual rider behavior 
 
 > Portfolio note: this independent analysis is not affiliated with or endorsed by Lyft, Divvy, or the City of Chicago. The Divvy name is used only to identify the public data source.
 
+## Review this project in 3 minutes (no setup required)
+
+You do **not** need PostgreSQL, the source files, or any command-line experience to evaluate this project.
+
+1. Read the [business question](#business-question) and the historical [published findings](#published-findings).
+2. Open the [interactive Tableau story](https://public.tableau.com/app/profile/mark.cruz4539/viz/CaseStudyDivvy/Story1) to explore the original visual analysis.
+3. Review the [methodology](docs/methodology.md) for the assumptions and quality rules behind the refreshed pipeline.
+4. Skim the final [validation checks](sql/04_validate_pipeline.sql) to see how the workflow tests its own output.
+
+The hands-on database setup later in this README is optional and intended for technical reviewers who want to reproduce the SQL workflow.
+
 ## Business question
 
 How do annual members and casual riders use the bike-share service differently, and which observable patterns could inform campaigns that encourage eligible casual riders to consider membership?
@@ -48,22 +59,64 @@ The original analysis also identified **Streeter Dr & Grand Ave** as the leading
 
 *Live preview from the original Tableau story. Open the image to explore all story points.*
 
-## Reproduce the analysis
+## Optional: reproduce the analysis locally
 
-Prerequisites: PostgreSQL and the 12 Divvy monthly trip files from August 2022 through July 2023.
+This is the technical review path. It requires PostgreSQL and the 12 external Divvy monthly trip files from August 2022 through July 2023. If you only want to assess the work, use the no-setup review above.
+
+### 1. Download the repository
+
+Install [Git](https://git-scm.com/downloads) if needed, then confirm `git --version` works.
+
+```bash
+git clone https://github.com/mccruz/case_study_divvy.git
+cd case_study_divvy
+```
+
+Run every remaining command from this directory. Your terminal prompt should show `case_study_divvy` rather than only `~`; otherwise relative paths such as `sql/00_create_source_table.sql` will not be found.
+
+### 2. Install and start PostgreSQL
+
+On a Mac with [Homebrew](https://brew.sh/):
+
+```bash
+brew install postgresql@18
+brew services start postgresql@18
+export PATH="$(brew --prefix postgresql@18)/bin:$PATH"
+psql --version
+pg_isready
+```
+
+The last command should report that PostgreSQL is accepting connections. Windows and Linux users can use the [official PostgreSQL download instructions](https://www.postgresql.org/download/).
+
+### 3. Create the database and source table
 
 ```bash
 createdb divvy_case_study
 psql -d divvy_case_study -f sql/00_create_source_table.sql
 ```
 
-Import each CSV into `raw_divvy_rides`, then run:
+If `createdb` says the database already exists, continue with the `psql` command. A successful table setup prints `CREATE TABLE` or reports that the existing table was retained.
+
+### 4. Import the data and run the pipeline
+
+Import each CSV into `raw_divvy_rides` using the [full reproducibility guide](docs/reproducibility.md), then run:
 
 ```bash
 psql -d divvy_case_study -f data_cleaning.sql
 ```
 
-The compatibility entry point runs profiling, preparation, analysis, and validation in order. See the [full reproducibility guide](docs/reproducibility.md) for import examples, the expected source schema, and an option for migrating the original combined table.
+The compatibility entry point runs profiling, preparation, analysis, and validation in order. Success means every integrity check in the final result reports `PASS`.
+
+### Common setup problems
+
+| Message | What it means | What to do |
+| --- | --- | --- |
+| `command not found: createdb` or `psql` | PostgreSQL is not installed or its tools are not on the current shell path. | Run the PostgreSQL installation and `export PATH=...` commands above. |
+| `connection ... failed` | The local PostgreSQL service is not running. | Run `brew services start postgresql@18`, then `pg_isready`. |
+| `sql/00_create_source_table.sql: No such file` | The terminal is not in the cloned repository. | Run `cd case_study_divvy`, then retry. |
+| `database "divvy_case_study" already exists` | The database was created during an earlier attempt. | Skip `createdb` and continue with the next command. |
+
+See the [full reproducibility guide](docs/reproducibility.md) for CSV import examples, the expected source schema, and an option for migrating the original combined table.
 
 ## Repository structure
 
