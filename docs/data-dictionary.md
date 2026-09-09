@@ -18,6 +18,20 @@ The raw import table mirrors the monthly CSV schema and deliberately applies no 
 | `end_lat`, `end_lng` | `double precision` | End coordinates, when present. |
 | `member_casual` | `text` | Source rider category: expected values are `member` or `casual`. |
 
+## `source_imports`
+
+One receipt is required for each monthly file from August 2022 through July
+2023. The importer writes it in the same transaction as the corresponding raw
+rows.
+
+| Column | Type | Meaning |
+| --- | --- | --- |
+| `source_month` | `date` | First day of the source file's required calendar month; primary key. |
+| `filename` | `text` | Validated source CSV filename. |
+| `sha256` | `text` | SHA-256 checksum calculated locally before import. |
+| `row_count` | `bigint` | Number of rows copied from that source CSV. |
+| `imported_at` | `timestamptz` | Database timestamp for the completed atomic import. |
+
 ## `prepared_rides`
 
 The prepared table preserves all imported rows and adds reviewable transformations.

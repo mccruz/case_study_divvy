@@ -1,20 +1,36 @@
 # Chicago Bike-Share Rider Analysis
 
-A PostgreSQL and Tableau case study that examines data quality and compares how
-annual members and casual riders used Chicago's bike-share service.
+A PostgreSQL and Tableau case study that helps a marketing team compare
+bike-share usage by annual members and casual riders, then choose testable
+membership-campaign ideas.
+
+## Example result
+
+**Historical finding from the original 2023 analysis:** members represented
+**64.8% of analyzed trips**; casual usage leaned toward weekends and afternoons.
+One possible experiment is to compare leisure-focused membership messaging
+with commuter messaging.
+
+This is an observed pattern and a proposed test, **not a measured conversion
+improvement**. The refreshed SQL has not been rerun on the full historical
+snapshot, so its totals may differ. The [dashboard](#dashboard) shows the
+original Tableau story.
+
+## My contribution
+
+I developed the rider comparison and Tableau story, then rebuilt the SQL as
+separate profiling, preparation, analysis, and validation stages. The refreshed
+version adds import receipts and synthetic regression checks; it uses no LLM.
 
 This independent analysis is not affiliated with or endorsed by Lyft, Divvy,
 or the City of Chicago. The Divvy name identifies the public data source.
 
-## Review this project in 3 minutes
+<a id="review-this-project-in-3-minutes"></a>
 
-No setup is required:
+## Explore the project
 
-1. Read the [business question](#business-question) and
-   [historical findings](#historical-findings).
-2. Open the [interactive Tableau story](https://public.tableau.com/app/profile/mark.cruz4539/viz/CaseStudyDivvy/Story1).
-3. Review the [methodology](docs/methodology.md) or
-   [validation checks](sql/04_validate_pipeline.sql) for technical evidence.
+Start with the example above, then follow the diagram and the
+[engineering evidence](#engineering-evidence). Setup is optional for review.
 
 ## Business question
 
@@ -45,13 +61,13 @@ flowchart LR
     E --> G[Validation checks]
 ```
 
-## What this demonstrates
+## Engineering evidence
 
-- Staged SQL transformations instead of one opaque query.
-- Visible data-quality flags and final validation checks.
-- Correct duration calculation for rides that cross midnight.
-- Preserved raw and normalized station fields for auditability.
-- A documented path from observed patterns to testable marketing ideas.
+| Capability | Implementation | Check |
+| --- | --- | --- |
+| Preserve raw fields and handle midnight rides | [Prepared-rides SQL](sql/02_build_prepared_rides.sql) | [Synthetic assertions](tests/assertions.sql) |
+| Verify the import and analysis scope | [Importer](scripts/import_divvy_month.py), [validation](sql/04_validate_pipeline.sql) | [Disposable database tests](tests/run_sql_tests.sh) |
+| Explain the analytical choices | [Analysis SQL](sql/03_analysis.sql) | [Methodology](docs/methodology.md) |
 
 ## Historical findings
 
@@ -92,15 +108,24 @@ sql/03_analysis.sql
 sql/04_validate_pipeline.sql
 ```
 
-After importing the CSV files into `raw_divvy_rides`, run:
+Create the database and import contract first:
 
 ```bash
 createdb divvy_case_study
 psql -d divvy_case_study -f sql/00_create_source_table.sql
+```
+
+Import each of the twelve monthly CSVs using the manifest-backed importer:
+
+```bash
+python3 scripts/import_divvy_month.py --database divvy_case_study \
+  /absolute/path/to/202208-divvy-tripdata.csv
+# Repeat for the remaining months, then run the pipeline:
 psql -d divvy_case_study -f data_cleaning.sql
 ```
 
-Success means every integrity check in the final output reports `PASS`. See the
+Success requires complete input receipts, nonempty data, and passing integrity
+checks. An invalid run exits with an error. See the
 [reproducibility guide](docs/reproducibility.md) for installation, CSV import,
 expected schema, and troubleshooting.
 
