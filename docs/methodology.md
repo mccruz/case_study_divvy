@@ -12,6 +12,15 @@ The trip records do not establish rider intent, home location, identity, income,
 
 `prepared_rides` retains raw start and end station names alongside normalized values. This makes consolidation rules reviewable and prevents cleaned labels from becoming the only available evidence.
 
+### Require a complete, attributable import
+
+Each required monthly file is imported through a staging table and paired with a
+`source_imports` receipt containing its filename, SHA-256 checksum, row count,
+and import time. Validation requires all twelve months from August 2022 through
+July 2023, rejects out-of-scope months, and requires the raw and prepared row
+counts to match. These checks establish pipeline completeness, not that the
+external source itself is error-free.
+
 ### Normalize known station-label variants
 
 The normalization step removes known `City Rack -` and `Public Rack -` prefixes plus temporary, directional, corner, and asterisk suffixes found during the original exploration. The raw label remains available for auditing.
